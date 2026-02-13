@@ -1,59 +1,77 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 type packet struct {
-	id int
+	seqID int
 	payload string
 }
 
 type videoStreamingBuffer struct {
-	buffer []packet
-	capacity int
+	buffer []*packet // sliding window
+	size int
+	header int // header gives the index of the expected id in the buffer
+	expectedID int
 }
 
-func NewVideoBuffer(cap int) *videoStreamingBuffer {
-	return &videoStreamingBuffer{
-		buffer: make([]packet, cap),
-		capacity: cap,
+func NewVideoBuffer(size int) *videoStreamingBuffer {
+	v := videoStreamingBuffer{
+		buffer: make([]*packet, size),
+		size: size,
+		header: 0,
+		expectedID: 0,
 	}
+
+	for i := range v.buffer {
+		v.buffer[i] = nil
+	}
+
+	return &v
 }
 
-func (v *videoStreamingBuffer) addPacket(x packet) {
-	// checking to which index does this packet belong
-	idx := x.id
+func (v *videoStreamingBuffer) addPacket(x *packet) {
+	// out of bounds check
+	header := v.header
+	size := v.size
+	packetID := x.seqID
+
+	if packetID < v.expectedID || packetID >= v.expectedID + size {
+		fmt.Printf("Packet %d dropped\n", packetID)
+		return
+	} 
 	
-	for v.capacity <= idx {
-		v.resize()
-	}
+	diffID := packetID - v.expectedID
+	idx := (header + diffID) % size
+
 	v.buffer[idx] = x
+
+	v.play()
 }
 
-func (v *videoStreamingBuffer) resize() {
-	newArray := make([]packet, v.capacity * 2)
-
-	copy(newArray, v.buffer)
-
-	v.buffer = newArray
-	v.capacity = cap(newArray)
-
-	fmt.Println("Resized to", v.capacity)
+func (v *videoStreamingBuffer) play() {
+	for v.buffer[v.header] != nil {
+		fmt.Printf("Packet %d: %s\n", v.expectedID, v.buffer[v.header].payload)
+		v.buffer[v.header] = nil
+		v.header++
+		v.header %= v.size
+		v.expectedID++
+	}
 }
 
-// the above approach of using id of packet as its index in the buffer is memory costly, time complexity has been traded off with space complexity
+func callStreamingBuffer() {
+	v := NewVideoBuffer(4)
 
-func main() {
-	v := NewVideoBuffer(8)
-
-	for i:=1;i<=10;i++ {
-		v.addPacket(packet{
-			id: i,
-			payload: "source ip: 192.168.0.1 | destination ip: 52.0.131.132",
+	for i:=1;i<10;i+=2 {
+		v.addPacket(&packet{
+			seqID: i,
+			payload: "hello from " + strconv.Itoa(i),
+		})
+		v.addPacket(&packet{
+			seqID: i-1,
+			payload: "hello from " + strconv.Itoa(i-1),
 		})
 	}
-	v.addPacket(packet{
-		id: 15,
-		payload: "the end of series",
-	})
-	fmt.Println(v)
 }
