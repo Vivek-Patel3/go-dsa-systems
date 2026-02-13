@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type song struct {
 	title string
 	lyrics string
@@ -36,17 +38,41 @@ func NewSongNode(s *song) *songNode {
 }
 
 func (playlist *songPlaylist) AddToPlaylist(song *song) {
-	songItem := NewSongNode(song)
-	 
+	songNode := NewSongNode(song)
+
 	if playlist.header == nil {
-		playlist.header = songItem
+		playlist.header = songNode
 		playlist.tail = playlist.header
 		return
 	}
 
 	lastSong := playlist.tail
-	lastSong.next = songItem
+	lastSong.next = songNode
 
-	playlist.tail = songItem
+	playlist.tail = songNode
 }
 
+// here we passed songNode instead of song, because at the deletion time (from the playlist), we have songNodes ready with us. Adding the song phase did not have songNode ready
+func (playlist *songPlaylist) DeleteFromPlaylist(songNode *songNode) {
+	removeNode := playlist.searchNode(songNode)
+
+	if removeNode == nil {
+		fmt.Println("Song doesn't exist in playlist")
+	}
+
+	removeNode.prev = removeNode.next
+
+	removeNode = nil // garbage collector will free the songNode memory since now it has no pointers pointing to it
+}
+
+func (playlist *songPlaylist) searchNode(songNode *songNode) *songNode {
+	temp := playlist.header
+
+	for temp != nil {
+		if temp == songNode {
+			return temp
+		}
+		temp = temp.next
+	}
+	return nil
+}
