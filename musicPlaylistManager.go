@@ -37,6 +37,13 @@ func NewSongNode(s *song) *songNode {
 	}
 }
 
+func NewSongPlaylist() *songPlaylist {
+	return &songPlaylist{
+		header: nil,
+		tail: nil,
+	}
+}
+
 func (playlist *songPlaylist) AddToPlaylist(song *song) {
 	songNode := NewSongNode(song)
 
@@ -75,4 +82,22 @@ func (playlist *songPlaylist) searchNode(songNode *songNode) *songNode {
 		temp = temp.next
 	}
 	return nil
+}
+
+func (playlist *songPlaylist) printPlaylist() {
+	if playlist.header == nil {
+		fmt.Println("Empty playlist")
+		return
+	}
+
+	temp := playlist.header
+
+	for temp!=nil {
+		fmt.Printf("Song: %s\n", temp.node.title)
+		
+		temp = temp.next
+	}
+	
+	fmt.Println("--------")
+	fmt.Println("End of Playlist")
 }
