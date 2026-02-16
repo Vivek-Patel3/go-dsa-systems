@@ -30,7 +30,7 @@ func NewSong(title, lyrics, artist string, duration uint64) *song {
 		duration: duration,
 	}
 }
-
+	
 func NewSongNode(s *song) *songNode {
 	return &songNode{
 		node: s,
@@ -44,24 +44,26 @@ func NewSongPlaylist() *songPlaylist {
 	}
 }
 
-func (playlist *songPlaylist) AddToPlaylist(song *song) {
+func (playlist *songPlaylist) AddToPlaylist(song *song) *songNode {
 	songNode := NewSongNode(song)
 
 	if playlist.header == nil {
 		playlist.header = songNode
 		playlist.tail = playlist.header
-		return
+		return songNode
 	}
 
 	lastSong := playlist.tail
 	lastSong.next = songNode
 
+	songNode.prev = lastSong
 	playlist.tail = songNode
+	return songNode // returning songNode so that it can be stored to be reused during shuffle logic
 }
 
 // here we passed songNode instead of song, because at the deletion time (from the playlist), we have songNodes ready with us. Adding the song phase did not have songNode ready
 func (playlist *songPlaylist) DeleteFromPlaylist(songNode *songNode) {
-	removeNode := playlist.searchNode(songNode)
+	removeNode, _ := playlist.searchNode(songNode)
 
 	if removeNode == nil {
 		fmt.Println("Song doesn't exist in playlist")
@@ -72,16 +74,89 @@ func (playlist *songPlaylist) DeleteFromPlaylist(songNode *songNode) {
 	removeNode = nil // garbage collector will free the songNode memory since now it has no pointers pointing to it
 }
 
-func (playlist *songPlaylist) searchNode(songNode *songNode) *songNode {
+func (playlist *songPlaylist) searchNode(songNd *songNode) (*songNode, int) {
 	temp := playlist.header
+	i := 0
+
+	check := func(node1, node2 *songNode) bool {
+		if node1.node.title == node2.node.title && node1.node.artist == node2.node.artist {
+			return true
+		} 
+		return false
+	}
 
 	for temp != nil {
-		if temp == songNode {
-			return temp
+		if check(temp, songNd) {
+			return temp, i
 		}
 		temp = temp.next
+		i++
 	}
-	return nil
+	return nil, -1
+}
+
+func (playlist *songPlaylist) len() int {
+	temp := playlist.header
+	ct := 0
+
+	for temp != nil {
+		temp = temp.next
+		ct++
+	}
+
+	return ct
+}
+
+func (playlist *songPlaylist) shuffleNode(songNode *songNode, destinationPos int) {
+	// temp points to the location where songNode needs to be
+	temp := playlist.header
+	toRight := false
+
+	for i:=0;i<destinationPos;i++ {
+		if temp == songNode {
+			toRight = true
+		}
+
+		temp = temp.next
+	}
+	
+	// changing the neighbours at the original location
+	if songNode.prev != nil {
+		songNode.prev.next = songNode.next
+	} else {
+		playlist.header = songNode.next
+	} 
+
+	if songNode.next != nil {
+		songNode.next.prev = songNode.prev
+	} else {
+		playlist.tail = songNode.prev
+	}
+
+	// now change the neighbours at the destination location
+
+	if !toRight {
+		songNode.prev = temp.prev
+		songNode.next = temp
+	
+		if temp.prev != nil {
+			temp.prev.next = songNode
+			temp.prev = songNode
+		} else {
+			playlist.header.prev = songNode
+			playlist.header = songNode
+		}
+	} else {
+		songNode.prev = temp
+		songNode.next = temp.next
+
+		if temp.next != nil {
+			temp.next.prev = songNode
+			temp.next = songNode
+		} else {
+			temp.next = songNode
+		}
+	}
 }
 
 func (playlist *songPlaylist) printPlaylist() {
@@ -97,7 +172,7 @@ func (playlist *songPlaylist) printPlaylist() {
 		
 		temp = temp.next
 	}
-	
+
 	fmt.Println("--------")
 	fmt.Println("End of Playlist")
 }
