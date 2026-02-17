@@ -164,6 +164,20 @@ func (playlist *songPlaylist) shuffleNode(songNode *songNode, destinationPos int
 	}
 }
 
+func (playlist *songPlaylist) merge(p *songPlaylist) {
+	playlist.tail.next = p.header
+	playlist.tail = p.tail
+}
+
+func mergePlaylists(playlists ...*songPlaylist) *songPlaylist {
+	var result *songPlaylist
+
+	for _, playlist := range playlists {
+		result.merge(playlist)
+	}
+	return result
+}
+
 func (playlist *songPlaylist) printPlaylist() {
 	if playlist.header == nil {
 		fmt.Println("Empty playlist")
