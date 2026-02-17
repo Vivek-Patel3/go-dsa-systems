@@ -120,6 +120,11 @@ func (playlist *songPlaylist) shuffleNode(songNode *songNode, destinationPos int
 		temp = temp.next
 	}
 	
+	// handling the edge case of having the songNode at its original place only
+	if temp == songNode {
+		return
+	}
+
 	// changing the neighbours at the original location
 	if songNode.prev != nil {
 		songNode.prev.next = songNode.next
