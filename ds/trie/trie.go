@@ -6,7 +6,7 @@ type Node struct {
 }
 
 type Trie struct {
-	root *Node
+	Root *Node
 }
 
 func NewTrieNode() *Node {
@@ -18,12 +18,12 @@ func NewTrieNode() *Node {
 
 func NewTrie() *Trie {
 	return &Trie{
-		root: NewTrieNode(),
+		Root: NewTrieNode(),
 	}
 }
 
 func (trie *Trie) Insert(s string) {
-	temp := trie.root
+	temp := trie.Root
 
 	for _,c := range s {
 		if temp.Children[c - 'a'] == nil {
@@ -37,7 +37,7 @@ func (trie *Trie) Insert(s string) {
 }
 
 func (trie *Trie) Search(s string) bool {
-	temp := trie.root
+	temp := trie.Root
 
 	for _,c := range s {
 		if temp.Children[c-'a'] == nil {
@@ -49,7 +49,7 @@ func (trie *Trie) Search(s string) bool {
 }
 
 func (trie *Trie) IsPrefix(s string) bool {
-	temp := trie.root
+	temp := trie.Root
 
 	for _,c := range s {
 		if temp.Children[c-'a'] == nil {
@@ -61,7 +61,7 @@ func (trie *Trie) IsPrefix(s string) bool {
 }
 
 func (trie *Trie) ReturnPrefixNode(s string) *Node {
-	temp := trie.root
+	temp := trie.Root
 
 	for _,c := range s {
 		if temp.Children[c-'a'] == nil {
@@ -71,4 +71,36 @@ func (trie *Trie) ReturnPrefixNode(s string) *Node {
 	}
 
 	return temp
+}
+
+func (trie *Trie) Delete(node *Node, title string, index int) bool {
+	next := node.Children[title[index] - 'a']
+
+	// check if this was the last index
+	if len(title) == index + 1 {
+		// delete this entire node
+		node = nil
+		return true
+	}
+
+	if trie.Delete(next, title, index + 1) {
+		// now check whether this node has multiple children
+		ct := 0
+
+		for _, temp := range node.Children {
+			if temp != nil {
+				ct++
+			}
+		}
+
+		if ct == 1 {
+			// delete this node as well
+			node = nil
+			return true
+		} else {
+			return false
+		}
+	} else {
+		return false
+	}
 }
