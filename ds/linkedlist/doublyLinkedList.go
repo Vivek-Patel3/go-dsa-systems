@@ -1,27 +1,27 @@
 package linkedlist
 
-type node[T any] struct {
-	val T
-	next *node[T]
-	prev *node[T]
+type Node[T comparable] struct {
+	Val T
+	next *Node[T]
+	prev *Node[T]
 }
 
-type LinkedList[T any] struct {
-	head *node[T]
-	tail *node[T]
+type LinkedList[T comparable] struct {
+	head *Node[T]
+	tail *Node[T]
 }
 
-func NewLinkedList[T any]() *LinkedList[T] {
+func NewLinkedList[T comparable]() *LinkedList[T] {
 	return &LinkedList[T]{}
 }
 
-func NewNode[T any](val T) *node[T] {
-	return &node[T]{
-		val: val,
+func NewNode[T comparable](val T) *Node[T] {
+	return &Node[T]{
+		Val: val,
 	}
 }
 
-func (list *LinkedList[T]) Insert(node *node[T]) {
+func (list *LinkedList[T]) Insert(node *Node[T]) {
 	if list.head == nil {
 		list.head = node
 		list.tail = node
@@ -33,16 +33,18 @@ func (list *LinkedList[T]) Insert(node *node[T]) {
 	list.tail = node
 }
 
-func (list *LinkedList[T]) Remove(node *node[T]) {
-	if node == nil {
-		return
-	}
-	
+func (list *LinkedList[T]) Search(val T) *Node[T] {
 	temp := list.head
 
-	for temp != node {
+	for temp != nil && temp.Val != val {
 		temp = temp.next
 	}
+
+	return temp
+}
+
+func (list *LinkedList[T]) Remove(val T) {
+	temp := list.Search(val)
 
 	temp.prev.next = temp.next
 	temp.next.prev = temp.prev
