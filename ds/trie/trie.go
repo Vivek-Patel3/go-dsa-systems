@@ -74,31 +74,40 @@ func (trie *Trie) ReturnPrefixNode(s string) *Node {
 }
 
 func (trie *Trie) Delete(node *Node, title string, index int) bool {
-	next := node.Children[title[index] - 'a']
-
-	// check if this was the last index
-	if len(title) == index + 1 {
-		// delete this entire node
-		node = nil
-		return true
+	if node == nil {
+		return false // this case is because next might be nil
 	}
 
+	if index == len(title) {
+		// end of word
+		// now check whether this node is the leaf node (if yes, then it has to be deleted by its parent)
+		if node.IsLeaf {
+			return true
+		} else {
+			return false
+		}
+	}
+
+	next := node.Children[title[index] - 'a']
+
 	if trie.Delete(next, title, index + 1) {
-		// now check whether this node has multiple children
+		// true, so need to delete this child pointed by index
+		node.Children[title[index] - 'a'] = nil
+
+		// now check whether this node has to be deleted or not
 		ct := 0
 
-		for _, temp := range node.Children {
-			if temp != nil {
+		for _, child := range node.Children {
+			if child != nil {
 				ct++
 			}
 		}
 
-		if ct == 1 {
-			// delete this node as well
-			node = nil
-			return true
-		} else {
+		if ct > 0 {
+			// has more children apart from the deleted
 			return false
+		} else {
+			return true
 		}
 	} else {
 		return false
