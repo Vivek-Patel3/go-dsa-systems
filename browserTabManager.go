@@ -73,4 +73,5 @@ func (tabManager *TabManager) Close(tab *Tab) {
 	tabManager.trie.Delete(tabManager.trie.Root, tab.title, 0)
 
 	// 2. now remove it from the linkedlist (this should be second step because linkedlist actually stores the pointer to the tab). After removing the node from the linkedlist, set the pointer to it to nil so it will be Garbage collected in next GC cycle
+	tabManager.list.Remove(tab)
 }
